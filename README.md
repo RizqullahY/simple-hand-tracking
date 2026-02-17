@@ -1,6 +1,8 @@
-#SIMPEL HAND TRACKING
+# SIMPEL HAND TRACKING
 
-- python -m venv ./venv
+```python
+python -m venv ./venv
+```
 
 ☝ : SCROLL DOWN 
 
