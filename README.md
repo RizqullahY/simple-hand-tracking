@@ -8,4 +8,4 @@ python -m venv ./venv
 
 ✌ : SCROLL UP
 
-👌 : KLIK
+Kelingking : KLIK

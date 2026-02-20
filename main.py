@@ -7,7 +7,8 @@ import time
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 
-scroll_speed = 100
+scroll_speed = 25          # lebih kecil biar smooth
+scroll_delay = 0.03        # jeda scroll (smoothness)
 click_threshold = 35
 
 base_options = python.BaseOptions(model_asset_path="hand_landmarker.task")
@@ -20,6 +21,7 @@ landmarker = vision.HandLandmarker.create_from_options(options)
 cap = cv2.VideoCapture(0)
 
 click_cooldown = 0
+last_scroll_time = 0
 
 def finger_up(tip, pip):
     return tip.y < pip.y
@@ -50,28 +52,34 @@ while True:
         middle_tip = hand[12]
         middle_pip = hand[10]
 
-        thumb_tip = hand[4]
+        pinky_tip = hand[20]      
+        pinky_pip = hand[18]
 
         index_up = finger_up(index_tip, index_pip)
         middle_up = finger_up(middle_tip, middle_pip)
 
-        # ===== SCROLL LOGIC =====
-        if index_up and not middle_up:
-            pyautogui.scroll(-scroll_speed)  # 1 jari → bawah
-            cv2.putText(frame, "SCROLL DOWN", (20, 50),
-                        cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 2)
+        # ===== SCROLL LOGIC (SMOOTH) =====
+        current_time = time.time()
 
-        elif index_up and middle_up:
-            pyautogui.scroll(scroll_speed)   # 2 jari → atas
-            cv2.putText(frame, "SCROLL UP", (20, 50),
-                        cv2.FONT_HERSHEY_SIMPLEX, 1, (0,255,0), 2)
+        if current_time - last_scroll_time > scroll_delay:
+            if index_up and not middle_up:
+                pyautogui.scroll(-scroll_speed)
+                last_scroll_time = current_time
+                cv2.putText(frame, "SCROLL DOWN", (20, 50),
+                            cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 2)
 
-        # ===== CLICK =====
+            elif index_up and middle_up:
+                pyautogui.scroll(scroll_speed)
+                last_scroll_time = current_time
+                cv2.putText(frame, "SCROLL UP", (20, 50),
+                            cv2.FONT_HERSHEY_SIMPLEX, 1, (0,255,0), 2)
+
+        # ===== CLICK (PAKAI KELINGKING) =====
         x1 = int(index_tip.x * w)
         y1 = int(index_tip.y * h)
 
-        x2 = int(thumb_tip.x * w)
-        y2 = int(thumb_tip.y * h)
+        x2 = int(pinky_tip.x * w)
+        y2 = int(pinky_tip.y * h)
 
         distance = math.hypot(x2 - x1, y2 - y1)
 
@@ -79,7 +87,7 @@ while True:
             if time.time() - click_cooldown > 1:
                 pyautogui.click()
                 click_cooldown = time.time()
-                cv2.putText(frame, "CLICK", (20, 100),
+                cv2.putText(frame, "CLICK (PINKY)", (20, 100),
                             cv2.FONT_HERSHEY_SIMPLEX, 1, (255,0,255), 2)
 
     cv2.imshow("1 Finger Down | 2 Finger Up", frame)
